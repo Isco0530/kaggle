@@ -1,0 +1,66 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import warnings;warnings.simplefilter('ignore')
+pd.set_option('display.max_columns', None)
+
+para=pd.read_excel('tset2.xlsx',sheetname='parameter')
+data1=pd.read_excel('tset2.xlsx',sheetname='bssheet')
+data2=pd.read_excel('tset2.xlsx',sheetname='wujifenlei')
+data3=pd.read_excel('tset2.xlsx',sheetname='guarantee')
+data4=pd.read_excel('tset2.xlsx',sheetname='protection')
+
+data=pd.merge(data1,data2,on='cifcode',how='left')
+data=pd.merge(data,data3,on='cifcode',how='left')
+data=pd.merge(data,data4,on='cifcode',how='left')
+all_data=pd.merge(data,para,on='industry_code',how='left')
+all_data['ni_light']=all_data['ni']-all_data['p']*0.1*all_data['revenue']
+all_data['ni_mid']=all_data['ni']-all_data['p']*0.3*all_data['revenue']
+all_data['ni_heavy']=all_data['ni']-all_data['p']*0.5*all_data['revenue']
+all_data['equity_light']=all_data['equity']+all_data['ni_light']
+all_data['equity_mid']=all_data['equity']+all_data['ni_mid']
+all_data['equity_heavy']=all_data['equity']+all_data['ni_heavy']
+all_data
+
+all_data['jitibili ']=all_data['jitibili '].fillna(0.0)
+all_data['buliangdaikuan']=all_data['buliangdaikuan'].fillna(0)
+all_data['guarantee']=all_data['guarantee'].fillna(0)
+all_data['protection']=all_data['protection'].fillna(0)
+all_data
+
+all_data['protection_mod']=np.where(all_data['collateral_risk']==1,0,np.where(all_data['rating']<'e1',all_data['protection'],all_data['guarantee']))
+all_data['buliang_light']=np.where((all_data['protection_mod']==0) & (all_data['equity_light']<0),1,all_data['buliangdaikuan'])
+all_data['buliang_mid']=np.where((all_data['protection_mod']==0) & (all_data['equity_mid']<0),1,all_data['buliangdaikuan'])
+all_data['buliang_heavy']=np.where((all_data['protection_mod']==0) & (all_data['equity_heavy']<0),1,all_data['buliangdaikuan'])
+all_data
+
+all_data['jitibili_light']=np.max([np.where((all_data['ni_light']<0.0)&(all_data['protection_mod']<2),0.02,0.0),np.where(all_data['equity_light']<0.0,0.25,0.0)],axis=0)
+all_data['jitibili_light']=np.max([all_data['jitibili_light'],all_data['jitibili ']],axis=0)
+all_data['jitibili_mid']=np.max([np.where((all_data['ni_mid']<0)&(all_data['protection_mod']<2),0.02,0),np.where(all_data['equity_mid']<0,0.25,0)],axis=0)
+all_data['jitibili_mid']=np.max([all_data['jitibili_mid'],all_data['jitibili ']],axis=0)
+all_data['jitibili_heavy']=np.max([np.where((all_data['ni_heavy']<0)&(all_data['protection_mod']<2),0.02,0),np.where(all_data['equity_heavy']<0,0.25,0)],axis=0)
+all_data['jitibili_heavy']=np.max([all_data['jitibili_heavy'],all_data['jitibili ']],axis=0)
+all_data
+
+result=pd.DataFrame(np.zeros((2,4)),columns=['original','light','mid','heavy'],index=['jitijine','huaizhang'])
+
+result.iloc[0,0]=np.sum(all_data['balance']*all_data['jitibili '])
+result.iloc[0,1]=np.sum(all_data['balance']*all_data['jitibili_light'])
+result.iloc[0,2]=np.sum(all_data['balance']*all_data['jitibili_mid'])
+result.iloc[0,3]=np.sum(all_data['balance']*all_data['jitibili_heavy'])
+result.iloc[1,0]=np.sum(all_data['loan']*all_data['buliangdaikuan'])
+result.iloc[1,1]=np.sum(all_data['loan']*all_data['buliang_light'])
+result.iloc[1,2]=np.sum(all_data['loan']*all_data['buliang_mid'])
+result.iloc[1,3]=np.sum(all_data['loan']*all_data['buliang_heavy'])
+result=result.T
+result.index.name='ehua_chengdu'
+result
+
+result.plot(figsize=(10,5),grid=True,secondary_y='huaizhang',style='--')
+result.T.plot.bar()
+
+fig=plt.figure()
+result1=fig.add_subplot(2,1,1).plot(result['jitijine'])
+result2=fig.add_subplot(2,1,2).plot(result['huaizhang'])
+plt.subplots_adjust(left=None, bottom=None, right=None, top=None,
+                wspace=None, hspace=0.9)
