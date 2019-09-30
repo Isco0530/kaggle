@@ -1,0 +1,40 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from pylab import mpl
+mpl.rcParams['font.sans-serif'] = ['FangSong'] # 指定默认字体
+mpl.rcParams['axes.unicode_minus'] = False
+
+
+plt.rcParams['figure.figsize']=[12,8]#设置图像尺寸
+
+fig, ax1 = plt.subplots()
+ax1.set_xlabel('时间')
+ax1.set_ylabel('millions', color=color)
+
+
+name_list=huizong2['date']
+num_list1=huizong2['非银行金融业（右轴）']
+num_list2=huizong2['租赁业（右轴）']
+num_list3=huizong2['房地产业（右轴）']
+plt.bar(range(len(num_list1)), num_list1, label='非银行金融业',fc = 'b',width=0.5)
+plt.bar(range(len(num_list2)), num_list2, label='租赁业',fc = 'r',width=0.5)
+plt.bar(range(len(num_list3)), num_list3, label='房地产业',fc = 'g',tick_label = name_list,width=0.5)
+plt.xticks(rotation=90)#旋转x轴标签
+plt.legend()
+
+ax2 = ax1.twinx() 
+ax2.set_ylabel('占比', color=color)
+ax2.set_ylim([0, 0.3])
+source_list1=huizong2['占比（非银行金融业）']
+source_list2=huizong2['占比（租赁业）']
+source_list3=huizong2['占比（房地产业）']
+
+ax2.plot(range(len(source_list1)), source_list1,'b',ms=10)
+ax2.plot(range(len(source_list2)), source_list2, 'r',ms=10)
+ax2.plot(range(len(source_list3)), source_list3, 'g',ms=10)
+
+plt.title('ノンバンク（除くABS）・物品賃貸業・不動産業')
+
+plt.show()
+
+
